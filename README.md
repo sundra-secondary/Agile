@@ -10,6 +10,8 @@ This project implements the patient/caregiver account signup task from CSF202 Pr
 4. Run `npm start` and open <http://localhost:4001/signup>. For automatic restarts, run `npm run dev`.
 5. Run `npm test` for the model and route checks.
 
+With MongoDB running locally, run `npm run test:integration` to verify patient and caregiver signup, login, and password storage against a separate `epharmacist_integration` database. The test removes the accounts it creates. To test Atlas, set `TEST_DATABASE_URL` in your ignored `.env` to an Atlas URI for a separate test database, then run the same command. Keep credentials out of Git.
+
 The app waits for MongoDB before accepting requests. The local database name is `epharmacist`. Database credentials belong only in `.env`; that file is ignored by Git.
 
 When opened in the provided VS Code dev container, Docker Compose starts a Node.js workspace and MongoDB and sets `DATABASE_LOCAL` to the MongoDB service address. Run `npm install` and `npm start` inside the container; port 4001 is forwarded automatically. Docker Desktop must be running for this option.
@@ -32,7 +34,9 @@ When opened in the provided VS Code dev container, Docker Compose starts a Node.
 - [x] Validate signup fields in the browser and on the server.
 - [x] Save form data to MongoDB and verify login against the saved account.
 - [x] Hash passwords before saving; omit hashes from normal user queries.
-- [ ] Connect to your own MongoDB instance and verify the full signup/login flow.
-- [ ] Update the Jaggle.ai board and assign due dates in your own project.
+- [x] Connect to a local MongoDB instance and verify the full signup/login flow.
+- [x] Update the Jaggle.ai board and assign due dates in your own project.
+
+See [TODO.md](TODO.md) for the remaining Practical checks.
 
 The app has a small account dashboard for checking the signed-in role. Pharmacist accounts, SME approval, reminders, and medical services belong to later backlog items.
