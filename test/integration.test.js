@@ -36,7 +36,7 @@ test('patient and caregiver signup, stored hashes, and login against MongoDB', {
     try { atlasTestDatabase = new URL(atlasUri).pathname === '/epharmacist_integration'; } catch { /* Invalid URI. */ }
   }
   if (atlasRequested && (!atlasUri || !atlasUri.startsWith('mongodb+srv://') ||
-      atlasUri.includes('CLUSTER.mongodb.net') || !atlasTestDatabase)) {
+      atlasUri.includes('CLUSTER.mongodb.net') || atlasUri.includes('REPLACE_WITH_DATABASE_PASSWORD') || !atlasTestDatabase)) {
     throw new Error('Set TEST_DATABASE_URL in .env to your Atlas URI with /epharmacist_integration before running npm run test:atlas.');
   }
   const uri = atlasRequested ? atlasUri : 'mongodb://127.0.0.1:27017/epharmacist_integration';
