@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="820" viewBox="0 0 1200 820" role="img" aria-labelledby="title desc">
+  <title id="title">Patient and caregiver signup and login wireframes</title>
+  <desc id="desc">Signup and login screen layouts with labelled fields, account role choices, and submit buttons.</desc>
+  <style>text{font-family:Arial,sans-serif;fill:#263b39}.screen{fill:#fff;stroke:#9dafaa;stroke-width:2}.bar{fill:#dae9e4}.box{fill:#fff;stroke:#a3b6b0;stroke-width:2}.button{fill:#247c70}.buttonText{fill:#fff;font-weight:bold}.label{font-size:17px;font-weight:bold}.small{font-size:14px;fill:#70827c}.heading{font-size:28px;font-weight:bold}.title{font-size:34px;font-weight:bold;fill:#173d39}</style>
+  <rect width="1200" height="820" fill="#f4f7f5"/>
+  <text x="60" y="62" class="title">ePharmacist · Account screens</text>
+  <text x="60" y="92" class="small">Sprint I wireframe · patient and caregiver account flow</text>
+  <rect x="60" y="125" width="510" height="650" rx="15" class="screen"/>
+  <rect x="60" y="125" width="510" height="50" rx="15" class="bar"/>
+  <text x="85" y="158" class="label">✚ ePharmacist</text>
+  <text x="90" y="217" class="heading">Create your account</text>
+  <text x="90" y="246" class="small">Already registered? Sign in</text>
+  <text x="90" y="286" class="label">I’m signing up as a</text>
+  <rect x="90" y="300" width="210" height="50" rx="7" class="box"/><text x="110" y="331">◯ Patient</text>
+  <rect x="312" y="300" width="228" height="50" rx="7" class="box"/><text x="332" y="331">◯ Caregiver</text>
+  <text x="90" y="382" class="label">First name</text><text x="320" y="382" class="label">Last name</text>
+  <rect x="90" y="393" width="215" height="38" rx="6" class="box"/><rect x="320" y="393" width="220" height="38" rx="6" class="box"/>
+  <text x="90" y="458" class="label">Email address</text><rect x="90" y="469" width="450" height="38" rx="6" class="box"/>
+  <text x="90" y="534" class="label">Password</text><rect x="90" y="545" width="450" height="38" rx="6" class="box"/>
+  <text x="90" y="609" class="label">Confirm password</text><rect x="90" y="620" width="450" height="38" rx="6" class="box"/>
+  <rect x="90" y="690" width="450" height="50" rx="7" class="button"/><text x="258" y="722" class="buttonText">Create account</text>
+  <rect x="630" y="125" width="510" height="650" rx="15" class="screen"/>
+  <rect x="630" y="125" width="510" height="50" rx="15" class="bar"/>
+  <text x="655" y="158" class="label">✚ ePharmacist</text>
+  <text x="660" y="217" class="heading">Sign in</text>
+  <text x="660" y="246" class="small">New to ePharmacist? Create an account</text>
+  <text x="660" y="314" class="label">Email address</text><rect x="660" y="326" width="450" height="45" rx="6" class="box"/>
+  <text x="660" y="415" class="label">Password</text><rect x="660" y="427" width="450" height="45" rx="6" class="box"/>
+  <rect x="660" y="527" width="450" height="50" rx="7" class="button"/><text x="860" y="559" class="buttonText">Sign in</text>
+  <path d="M570 390 H630" stroke="#247c70" stroke-width="3"/><path d="m620 380 10 10-10 10" fill="none" stroke="#247c70" stroke-width="3"/>
+</svg>
