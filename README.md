@@ -22,7 +22,7 @@ When opened in the provided VS Code dev container, Docker Compose starts MongoDB
 | `models/userModel.js` | MongoDB account schema and password hashing |
 | `controllers/authController.js`, `routes/authRoutes.js` | Signup, login, dashboard, logout |
 | `views/`, `public/` | EJS pages, CSS and browser validation |
-| `Database/ERD.md` | Sprint I data model |
+| `Database/agile-lab-4.drawio` | Editable account ER diagram |
 | `wireframes/account-flows.svg` | Signup and login wireframe |
 
 ## Sprint I account story
