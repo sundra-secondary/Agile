@@ -1,9 +1,28 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('node:http');
+const { spawnSync } = require('node:child_process');
 const bcrypt = require('bcryptjs');
 const app = require('../app');
 const User = require('../models/userModel');
+
+test('production refuses missing or example session secrets', () => {
+  for (const secret of ['', 'replace-with-a-long-random-secret', 'too-short']) {
+    const result = spawnSync(process.execPath, ['-e', "require('./app')"], {
+      cwd: require('node:path').join(__dirname, '..'),
+      env: { ...process.env, NODE_ENV: 'production', SESSION_SECRET: secret },
+      encoding: 'utf8'
+    });
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /Set SESSION_SECRET/);
+  }
+  const valid = spawnSync(process.execPath, ['-e', "require('./app')"], {
+    cwd: require('node:path').join(__dirname, '..'),
+    env: { ...process.env, NODE_ENV: 'production', SESSION_SECRET: 'a-unique-session-secret-with-more-than-32-characters' },
+    encoding: 'utf8'
+  });
+  assert.equal(valid.status, 0, valid.stderr);
+});
 
 function request(port, path, method = 'GET', body = '', cookie = '') {
   return new Promise((resolve, reject) => {

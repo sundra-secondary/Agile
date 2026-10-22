@@ -6,13 +6,13 @@ This project implements the patient/caregiver account signup task from CSF202 Pr
 
 1. Install Node.js 16 or newer and have a local MongoDB server running on port 27017, or obtain a MongoDB Atlas connection URI.
 2. Run `npm install`.
-3. Copy `.env.example` to `.env`. Set `DATABASE_URL` for Atlas or leave `DATABASE_LOCAL` for a local database. Set a long, random `SESSION_SECRET`.
+3. Copy `.env.example` to `.env`. Set `DATABASE_URL` for Atlas or leave `DATABASE_LOCAL` for a local database. Replace the example `SESSION_SECRET` with a unique random value of at least 32 characters. Production startup requires this.
 4. Run `npm start` and open <http://localhost:4001/signup>. For automatic restarts, run `npm run dev`.
 5. Run `npm test` for the model and route checks.
 
 The app waits for MongoDB before accepting requests. The local database name is `epharmacist`. Database credentials belong only in `.env`; that file is ignored by Git.
 
-When opened in the provided VS Code dev container, Docker Compose starts MongoDB alongside the existing services and sets `DATABASE_LOCAL` to the MongoDB service address. Run `npm install` and `npm start` inside the container; port 4001 is forwarded automatically. Docker Desktop must be running for this option.
+When opened in the provided VS Code dev container, Docker Compose starts a Node.js workspace and MongoDB and sets `DATABASE_LOCAL` to the MongoDB service address. Run `npm install` and `npm start` inside the container; port 4001 is forwarded automatically. Docker Desktop must be running for this option.
 
 ## Project structure
 
