@@ -10,7 +10,7 @@ This project implements the patient/caregiver account signup task from CSF202 Pr
 4. Run `npm start` and open <http://localhost:4001/signup>. For automatic restarts, run `npm run dev`.
 5. Run `npm test` for the model and route checks.
 
-With MongoDB running locally, run `npm run test:integration` to verify patient and caregiver signup, login, and password storage against a separate `epharmacist_integration` database. The test removes the accounts it creates. To test Atlas, set `TEST_DATABASE_URL` in your ignored `.env` to an Atlas URI for a separate test database, then run the same command. Keep credentials out of Git.
+With MongoDB running locally, run `npm run test:integration` to verify patient and caregiver signup, login, and password storage against a separate `epharmacist_integration` database. The test removes the accounts it creates. To test Atlas, set `TEST_DATABASE_URL` in your ignored `.env` to an Atlas URI for a separate test database, then run `npm run test:atlas`. Keep credentials out of Git.
 
 The app waits for MongoDB before accepting requests. The local database name is `epharmacist`. Database credentials belong only in `.env`; that file is ignored by Git.
 

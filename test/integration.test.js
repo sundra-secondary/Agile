@@ -29,7 +29,17 @@ function request(port, path, method = 'GET', fields = {}, cookie = '') {
 }
 
 test('patient and caregiver signup, stored hashes, and login against MongoDB', { timeout: 30000 }, async () => {
-  const uri = process.env.TEST_DATABASE_URL || 'mongodb://127.0.0.1:27017/epharmacist_integration';
+  const atlasRequested = process.argv.includes('--atlas');
+  const atlasUri = process.env.TEST_DATABASE_URL;
+  let atlasTestDatabase = false;
+  if (atlasUri) {
+    try { atlasTestDatabase = new URL(atlasUri).pathname === '/epharmacist_integration'; } catch { /* Invalid URI. */ }
+  }
+  if (atlasRequested && (!atlasUri || !atlasUri.startsWith('mongodb+srv://') ||
+      atlasUri.includes('CLUSTER.mongodb.net') || !atlasTestDatabase)) {
+    throw new Error('Set TEST_DATABASE_URL in .env to your Atlas URI with /epharmacist_integration before running npm run test:atlas.');
+  }
+  const uri = atlasRequested ? atlasUri : 'mongodb://127.0.0.1:27017/epharmacist_integration';
   const emails = [];
   let server;
   try {
