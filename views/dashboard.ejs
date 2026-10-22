@@ -1,0 +1,11 @@
+<%- include('partials/head') %>
+<main class="single-page">
+  <div class="dashboard-card">
+    <p class="eyebrow">YOUR ACCOUNT</p>
+    <h1>Welcome, <%= user.firstName %>.</h1>
+    <p>You are signed in as a <strong><%= user.role %></strong>.</p>
+    <p class="muted">Your account has been created. More ePharmacist services will be added in later sprints.</p>
+    <form action="/logout" method="post"><button class="primary-button" type="submit">Sign out <span aria-hidden="true">→</span></button></form>
+  </div>
+</main>
+<%- include('partials/foot') %>
