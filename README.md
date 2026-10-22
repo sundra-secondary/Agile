@@ -12,6 +12,8 @@ This project implements the patient/caregiver account signup task from CSF202 Pr
 
 The app waits for MongoDB before accepting requests. The local database name is `epharmacist`. Database credentials belong only in `.env`; that file is ignored by Git.
 
+When opened in the provided VS Code dev container, Docker Compose starts MongoDB alongside the existing services and sets `DATABASE_LOCAL` to the MongoDB service address. Run `npm install` and `npm start` inside the container; port 4001 is forwarded automatically. Docker Desktop must be running for this option.
+
 ## Project structure
 
 | Path | Purpose |

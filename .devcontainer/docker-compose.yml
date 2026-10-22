@@ -1,5 +1,3 @@
-version: '3'
-
 services:
   app:
     build:
@@ -14,6 +12,8 @@ services:
 
     # Runs app on the same network as the database container, allows "forwardPorts" in devcontainer.json function.
     network_mode: service:db
+    environment:
+      DATABASE_LOCAL: mongodb://mongo:27017/epharmacist
 
     # Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
     # user: root
@@ -28,5 +28,11 @@ services:
       SA_PASSWORD: P@ssw0rd
       ACCEPT_EULA: Y
 
-    # Add "forwardPorts": ["db:1433"] to **devcontainer.json** to forward MSSQL locally.
-    # (Adding the "ports" property to this file will not forward from a Codespace.)
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    volumes:
+      - mongo-data:/data/db
+
+volumes:
+  mongo-data:
