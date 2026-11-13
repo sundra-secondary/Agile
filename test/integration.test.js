@@ -84,6 +84,7 @@ test('patient and caregiver signup, stored hashes, and login against MongoDB', {
       const dashboard = await request(port, '/dashboard', 'GET', {}, signupCookie);
       assert.equal(dashboard.status, 200);
       assert.match(dashboard.text, new RegExp(`signed in as a <strong>${role}</strong>`));
+      assert.match(dashboard.text, /\/js\/dashboard\.js/);
 
       const saved = await User.findOne({ email }).select('+password');
       assert.ok(saved);
@@ -132,6 +133,12 @@ test('patient and caregiver signup, stored hashes, and login against MongoDB', {
     const apiLogin = await requestJson(port, `${base}/login`, 'POST', { email, password: fields.password });
     assert.equal(apiLogin.status, 200);
     assert.match(apiLogin.body.token, /^[^.]+\.[^.]+\.[^.]+$/);
+    const apiCookie = apiLogin.headers['set-cookie'][0].split(';')[0];
+    assert.match((await request(port, '/dashboard', 'GET', {}, apiCookie)).text, /Welcome, Api/);
+    const apiLogout = await request(port, `${base}/logout`, 'POST', {}, apiCookie);
+    assert.equal(apiLogout.status, 200);
+    assert.match(apiLogout.headers['set-cookie'][0], /epharmacist\.jwt=;/);
+    assert.match((await request(port, '/dashboard')).text, /Your care starts here/);
     const list = await requestJson(port, base, 'GET', undefined, token);
     assert.equal(list.status, 200);
     assert.ok(list.body.users.some(user => user.id === id));

@@ -126,9 +126,19 @@ async function formLogin(req, res) {
   }
 }
 
-function logout(req, res) {
+function clearAuthCookies(res) {
   res.clearCookie(cookieName, { sameSite: 'lax', secure: process.env.NODE_ENV === 'production' });
+  res.clearCookie('epharmacist.user', { sameSite: 'lax', secure: process.env.NODE_ENV === 'production' });
+}
+
+function apiLogout(req, res) {
+  clearAuthCookies(res);
+  return res.json({ status: 'success', message: 'Signed out.' });
+}
+
+function logout(req, res) {
+  clearAuthCookies(res);
   return res.redirect('/login');
 }
 
-module.exports = { apiSignup, apiLogin, formSignup, formLogin, logout, readToken, protectApi, protectPage };
+module.exports = { apiSignup, apiLogin, apiLogout, formSignup, formLogin, logout, readToken, protectApi, protectPage };

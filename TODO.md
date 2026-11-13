@@ -8,5 +8,7 @@
 - [x] In E-Pharmacist-Bomjan, add the Practical 4 CRUD, password validation, and hashing child tasks under Lab 4 and move all four tasks to Done.
 - [x] Complete Practical 5 JWT authentication, token cookie, login, central API error handling, and protected dashboard.
 - [x] Move Lab 5 and its four child tasks to Done in E-Pharmacist-Bomjan.
+- [x] Complete Practical 6 Axios signup and login, feedback alerts, guest and signed-in dashboard, display-user cookie, and API logout.
+- [x] Place Lab 7 and its four account-flow child tasks in Done in E-Pharmacist-Bomjan.
 
 The PDF uses GitLab while this project is on GitHub. Confirm the required submission repository with the instructor.

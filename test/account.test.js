@@ -97,14 +97,20 @@ test('account routes render and reject invalid signup before database access', a
     const login = await request(port, '/login');
     assert.equal(login.status, 200);
     assert.match(login.text, /Sign in/);
+    assert.match(login.text, /\/js\/login\.js/);
+    assert.match(signup.text, /\/js\/signup\.js/);
     const dashboard = await request(port, '/dashboard');
-    assert.equal(dashboard.status, 302);
-    assert.equal(dashboard.headers.location, '/login');
+    assert.equal(dashboard.status, 200);
+    assert.match(dashboard.text, /Your care starts here/);
+    assert.doesNotMatch(dashboard.text, /YOUR ACCOUNT/);
     const protectedApi = await request(port, '/api/v1/users');
     assert.equal(protectedApi.status, 401);
     assert.match(protectedApi.text, /Sign in/);
     const missingLogin = await request(port, '/api/v1/users/login', 'POST', '');
     assert.equal(missingLogin.status, 400);
+    const apiLogout = await request(port, '/api/v1/users/logout', 'POST', '');
+    assert.equal(apiLogout.status, 200);
+    assert.match(apiLogout.headers['set-cookie'][0], /epharmacist\.jwt=;/);
     const badSignup = await request(port, '/signup', 'POST', new URLSearchParams({
       firstName: 'Karma', lastName: 'Wangmo', email: 'karma@example.com',
       role: 'patient', password: 'password1', confirmPassword: 'different'

@@ -9,7 +9,7 @@ function loginPage(req, res) {
 }
 
 function dashboard(req, res) {
-  return res.render('dashboard', { title: 'Your account', user: req.user });
+  return res.render('dashboard', { title: 'Your account', user: req.user || null });
 }
 
 module.exports = { signupPage, loginPage, dashboard };

@@ -15,12 +15,15 @@
       <h2>Sign in</h2>
       <p class="subheading">New to ePharmacist? <a href="/signup">Create an account</a></p>
       <% if (error) { %><div class="alert" role="alert"><%= error %></div><% } %>
-      <form action="/login" method="post">
-        <label>Email address<input type="email" name="email" autocomplete="email" placeholder="you@example.com" value="<%= email %>" required></label>
-        <label>Password<input type="password" name="password" autocomplete="current-password" required></label>
+      <form action="/login" method="post" data-login-form>
+        <label>Email address<input id="login-email" type="email" name="email" autocomplete="email" placeholder="you@example.com" value="<%= email %>" required></label>
+        <label>Password<input id="login-password" type="password" name="password" autocomplete="current-password" required></label>
         <button class="primary-button" type="submit">Sign in <span aria-hidden="true">→</span></button>
       </form>
     </div>
   </section>
 </main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.20.0/axios.min.js" defer></script>
+<script src="/js/alert.js" defer></script>
+<script src="/js/login.js" defer></script>
 <%- include('partials/foot') %>

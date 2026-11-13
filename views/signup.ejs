@@ -20,7 +20,7 @@
       <h2>Create your account</h2>
       <p class="subheading">Already have an account? <a href="/login">Sign in</a></p>
       <% if (error) { %><div class="alert" role="alert"><%= error %></div><% } %>
-      <form action="/signup" method="post" data-validate>
+      <form action="/signup" method="post" data-validate data-signup-form>
         <fieldset class="role-picker">
           <legend>I’m signing up as a</legend>
           <label class="role-option"><input type="radio" name="role" value="patient" <%= values.role === 'patient' ? 'checked' : '' %> required><span><strong>Patient</strong><small>Manage my own care</small></span></label>
@@ -41,4 +41,7 @@
     </div>
   </section>
 </main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.20.0/axios.min.js" defer></script>
+<script src="/js/alert.js" defer></script>
+<script src="/js/signup.js" defer></script>
 <%- include('partials/foot') %>
