@@ -1,77 +1,134 @@
+const jwt = require('jsonwebtoken');
 const User = require('../models/userModel');
+const AppError = require('../utils/AppError');
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const cookieName = 'epharmacist.jwt';
 
-function signupPage(req, res) {
-  if (req.session.user) return res.redirect('/dashboard');
-  return res.render('signup', { title: 'Create an account', error: null, values: {} });
+function publicUser(user) {
+  return { id: user.id, firstName: user.firstName, lastName: user.lastName, email: user.email, role: user.role };
 }
 
-async function signup(req, res) {
-  const values = {
-    firstName: String(req.body.firstName || '').trim(),
-    lastName: String(req.body.lastName || '').trim(),
-    email: String(req.body.email || '').trim().toLowerCase(),
-    role: String(req.body.role || '')
+function issueToken(user, res) {
+  const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
+    algorithm: 'HS256', expiresIn: process.env.JWT_EXPIRES_IN || '90d'
+  });
+  const days = Number(process.env.JWT_COOKIE_EXPIRES_IN) || 90;
+  res.cookie(cookieName, token, {
+    httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production',
+    maxAge: days * 24 * 60 * 60 * 1000
+  });
+  return token;
+}
+
+function signupFields(body) {
+  const fields = {
+    firstName: String(body.firstName || '').trim(),
+    lastName: String(body.lastName || '').trim(),
+    email: String(body.email || '').trim().toLowerCase(),
+    role: String(body.role || ''),
+    password: String(body.password || ''),
+    passwordConfirm: String(body.passwordConfirm || body.confirmPassword || '')
   };
-  const password = String(req.body.password || '');
-  const confirmPassword = String(req.body.confirmPassword || '');
-  const fail = (error, status = 400) => res.status(status).render('signup', { title: 'Create an account', error, values });
-
-  if (!values.firstName || !values.lastName || !values.email || !password || !confirmPassword || !values.role) return fail('Please complete every field.');
-  if (values.firstName.length > 60 || values.lastName.length > 60) return fail('Names must be 60 characters or fewer.');
-  if (!emailPattern.test(values.email)) return fail('Enter a valid email address.');
-  if (!['patient', 'caregiver'].includes(values.role)) return fail('Choose patient or caregiver.');
-  if (password.length < 8) return fail('Use a password with at least 8 characters.');
-  if (password !== confirmPassword) return fail('Passwords do not match.');
-
-  try {
-    const user = await User.create({ ...values, password, passwordConfirm: confirmPassword });
-    req.session.regenerate(error => {
-      if (error) return fail('Unable to start your session. Please sign in.', 500);
-      req.session.user = { id: user.id, firstName: user.firstName, role: user.role };
-      return res.redirect('/dashboard');
-    });
-  } catch (error) {
-    if (error.code === 11000) return fail('An account with that email already exists.', 409);
-    if (error.name === 'ValidationError') return fail(Object.values(error.errors)[0].message);
-    return fail('Unable to create the account right now. Please try again.', 500);
-  }
+  if (Object.values(fields).some(value => !value)) throw new AppError('Please complete every field.', 400);
+  if (fields.firstName.length > 60 || fields.lastName.length > 60) throw new AppError('Names must be 60 characters or fewer.', 400);
+  if (!emailPattern.test(fields.email)) throw new AppError('Enter a valid email address.', 400);
+  if (!['patient', 'caregiver'].includes(fields.role)) throw new AppError('Choose patient or caregiver.', 400);
+  if (fields.password.length < 8) throw new AppError('Use a password with at least 8 characters.', 400);
+  if (fields.password !== fields.passwordConfirm) throw new AppError('Passwords do not match.', 400);
+  return fields;
 }
 
-function loginPage(req, res) {
-  if (req.session.user) return res.redirect('/dashboard');
-  return res.render('login', { title: 'Sign in', error: null, email: '' });
+async function createAccount(body) { return User.create(signupFields(body)); }
+
+async function checkCredentials(body) {
+  const email = String(body.email || '').trim().toLowerCase();
+  const password = String(body.password || '');
+  if (!email || !password) throw new AppError('Enter your email and password.', 400);
+  const user = await User.findOne({ email }).select('+password');
+  if (!user || !(await user.verifyPassword(password))) throw new AppError('Incorrect email or password.', 401);
+  return user;
 }
 
-async function login(req, res) {
-  const email = String(req.body.email || '').trim().toLowerCase();
-  const password = String(req.body.password || '');
-  const fail = (error, status = 401) => res.status(status).render('login', { title: 'Sign in', error, email });
-  if (!email || !password) return fail('Enter your email and password.', 400);
-  try {
-    const user = await User.findOne({ email }).select('+password');
-    if (!user || !(await user.verifyPassword(password))) return fail('Incorrect email or password.');
-    req.session.regenerate(error => {
-      if (error) return fail('Unable to start your session. Please try again.', 500);
-      req.session.user = { id: user.id, firstName: user.firstName, role: user.role };
-      return res.redirect('/dashboard');
-    });
-  } catch (error) {
-    return fail('Unable to sign in right now. Please try again.', 500);
-  }
+function tokenFrom(req) {
+  const authorization = req.headers.authorization || '';
+  if (authorization.startsWith('Bearer ')) return authorization.slice(7).trim();
+  const cookie = (req.headers.cookie || '').split(';').map(part => part.trim()).find(part => part.startsWith(`${cookieName}=`));
+  return cookie ? cookie.slice(cookieName.length + 1) : null;
 }
 
-function dashboard(req, res) {
-  if (!req.session.user) return res.redirect('/login');
-  return res.render('dashboard', { title: 'Your account', user: req.session.user });
+async function readToken(req, res, next) {
+  const token = tokenFrom(req);
+  if (!token) return next();
+  let payload;
+  try { payload = jwt.verify(token, process.env.JWT_SECRET, { algorithms: ['HS256'] }); }
+  catch { return next(); }
+  try { req.user = await User.findById(payload.id); return next(); }
+  catch (error) { return next(error); }
 }
 
-function logout(req, res) {
-  req.session.destroy(() => {
-    res.clearCookie('epharmacist.sid');
-    res.redirect('/login');
+function protectApi(req, res, next) {
+  readToken(req, res, error => {
+    if (error) return next(error);
+    if (!req.user) return next(new AppError('Sign in to access this resource.', 401));
+    return next();
   });
 }
 
-module.exports = { signupPage, signup, loginPage, login, dashboard, logout };
+function protectPage(req, res, next) {
+  readToken(req, res, error => {
+    if (error) return next(error);
+    if (!req.user) return res.redirect('/login');
+    return next();
+  });
+}
+
+async function apiSignup(req, res, next) {
+  try {
+    const user = await createAccount(req.body || {});
+    return res.status(201).json({ token: issueToken(user, res), user: publicUser(user) });
+  } catch (error) { return next(error); }
+}
+
+async function apiLogin(req, res, next) {
+  try {
+    const user = await checkCredentials(req.body || {});
+    return res.json({ token: issueToken(user, res), user: publicUser(user) });
+  } catch (error) { return next(error); }
+}
+
+async function formSignup(req, res) {
+  const values = { firstName: req.body.firstName || '', lastName: req.body.lastName || '', email: req.body.email || '', role: req.body.role || '' };
+  try {
+    const user = await createAccount(req.body || {});
+    issueToken(user, res);
+    return res.redirect('/dashboard');
+  } catch (error) {
+    const status = error.code === 11000 ? 409 : error.statusCode || (error.name === 'ValidationError' ? 400 : 500);
+    const message = error.code === 11000 ? 'An account with that email already exists.' :
+      error.name === 'ValidationError' ? Object.values(error.errors)[0].message :
+      status === 500 ? 'Unable to create the account right now. Please try again.' : error.message;
+    return res.status(status).render('signup', { title: 'Create an account', error: message, values });
+  }
+}
+
+async function formLogin(req, res) {
+  const email = String(req.body.email || '').trim().toLowerCase();
+  try {
+    const user = await checkCredentials(req.body || {});
+    issueToken(user, res);
+    return res.redirect('/dashboard');
+  } catch (error) {
+    const status = error.statusCode || 500;
+    return res.status(status).render('login', {
+      title: 'Sign in', error: status === 500 ? 'Unable to sign in right now. Please try again.' : error.message, email
+    });
+  }
+}
+
+function logout(req, res) {
+  res.clearCookie(cookieName, { sameSite: 'lax', secure: process.env.NODE_ENV === 'production' });
+  return res.redirect('/login');
+}
+
+module.exports = { apiSignup, apiLogin, formSignup, formLogin, logout, readToken, protectApi, protectPage };

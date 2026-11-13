@@ -6,19 +6,19 @@ const bcrypt = require('bcryptjs');
 const app = require('../app');
 const User = require('../models/userModel');
 
-test('production refuses missing or example session secrets', () => {
-  for (const secret of ['', 'replace-with-a-long-random-secret', 'too-short']) {
+test('application refuses missing or example JWT secrets', () => {
+  for (const secret of ['', 'replace-with-a-unique-random-secret-at-least-32-characters-long', 'too-short']) {
     const result = spawnSync(process.execPath, ['-e', "require('./app')"], {
       cwd: require('node:path').join(__dirname, '..'),
-      env: { ...process.env, NODE_ENV: 'production', SESSION_SECRET: secret },
+      env: { ...process.env, NODE_ENV: 'production', JWT_SECRET: secret },
       encoding: 'utf8'
     });
     assert.notEqual(result.status, 0);
-    assert.match(result.stderr, /Set SESSION_SECRET/);
+    assert.match(result.stderr, /Set JWT_SECRET/);
   }
   const valid = spawnSync(process.execPath, ['-e', "require('./app')"], {
     cwd: require('node:path').join(__dirname, '..'),
-    env: { ...process.env, NODE_ENV: 'production', SESSION_SECRET: 'a-unique-session-secret-with-more-than-32-characters' },
+    env: { ...process.env, NODE_ENV: 'production', JWT_SECRET: 'a-unique-jwt-secret-with-more-than-32-characters' },
     encoding: 'utf8'
   });
   assert.equal(valid.status, 0, valid.stderr);
@@ -100,6 +100,11 @@ test('account routes render and reject invalid signup before database access', a
     const dashboard = await request(port, '/dashboard');
     assert.equal(dashboard.status, 302);
     assert.equal(dashboard.headers.location, '/login');
+    const protectedApi = await request(port, '/api/v1/users');
+    assert.equal(protectedApi.status, 401);
+    assert.match(protectedApi.text, /Sign in/);
+    const missingLogin = await request(port, '/api/v1/users/login', 'POST', '');
+    assert.equal(missingLogin.status, 400);
     const badSignup = await request(port, '/signup', 'POST', new URLSearchParams({
       firstName: 'Karma', lastName: 'Wangmo', email: 'karma@example.com',
       role: 'patient', password: 'password1', confirmPassword: 'different'
