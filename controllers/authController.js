@@ -26,7 +26,7 @@ async function signup(req, res) {
   if (password !== confirmPassword) return fail('Passwords do not match.');
 
   try {
-    const user = await User.create({ ...values, password });
+    const user = await User.create({ ...values, password, passwordConfirm: confirmPassword });
     req.session.regenerate(error => {
       if (error) return fail('Unable to start your session. Please sign in.', 500);
       req.session.user = { id: user.id, firstName: user.firstName, role: user.role };

@@ -28,6 +28,23 @@ function request(port, path, method = 'GET', fields = {}, cookie = '') {
   });
 }
 
+function requestJson(port, path, method = 'GET', fields) {
+  const body = fields === undefined ? '' : JSON.stringify(fields);
+  return new Promise((resolve, reject) => {
+    const req = http.request({
+      hostname: '127.0.0.1', port, path, method,
+      headers: { 'content-type': 'application/json', 'content-length': Buffer.byteLength(body) }
+    }, res => {
+      let text = '';
+      res.setEncoding('utf8');
+      res.on('data', chunk => { text += chunk; });
+      res.on('end', () => resolve({ status: res.statusCode, text, body: text ? JSON.parse(text) : null }));
+    });
+    req.on('error', reject);
+    req.end(body);
+  });
+}
+
 test('patient and caregiver signup, stored hashes, and login against MongoDB', { timeout: 30000 }, async () => {
   const atlasRequested = process.argv.includes('--atlas');
   const atlasUri = process.env.TEST_DATABASE_URL;
@@ -82,6 +99,39 @@ test('patient and caregiver signup, stored hashes, and login against MongoDB', {
       const loginCookie = login.headers['set-cookie'][0].split(';')[0];
       assert.equal((await request(port, '/dashboard', 'GET', {}, loginCookie)).status, 200);
     }
+
+    const email = `api-test-${randomUUID()}@example.com`;
+    emails.push(email);
+    const base = '/api/v1/users';
+    const fields = { firstName: 'Api', lastName: 'Test', email, role: 'patient', password: 'initial-password', passwordConfirm: 'initial-password' };
+    const invalid = await requestJson(port, base, 'POST', { ...fields, passwordConfirm: 'different' });
+    assert.equal(invalid.status, 400);
+    assert.equal(await User.countDocuments({ email }), 0);
+    const created = await requestJson(port, base, 'POST', fields);
+    assert.equal(created.status, 201, created.text);
+    assert.equal(created.body.user.email, email);
+    assert.equal(JSON.stringify(created.body).includes('password'), false);
+    const id = created.body.user.id;
+    assert.equal((await requestJson(port, base, 'POST', fields)).status, 409);
+    const list = await requestJson(port, base);
+    assert.equal(list.status, 200);
+    assert.ok(list.body.users.some(user => user.id === id));
+    assert.equal(JSON.stringify(list.body).includes('password'), false);
+    assert.equal((await requestJson(port, `${base}/${id}`)).body.user.email, email);
+    assert.equal((await requestJson(port, `${base}/bad-id`)).status, 400);
+    const mismatch = await requestJson(port, `${base}/${id}`, 'PATCH', { password: 'changed-password', passwordConfirm: 'different' });
+    assert.equal(mismatch.status, 400);
+    const before = await User.findById(id).select('+password');
+    assert.equal(await before.verifyPassword('initial-password'), true);
+    const updated = await requestJson(port, `${base}/${id}`, 'PUT', { password: 'changed-password', passwordConfirm: 'changed-password', role: 'caregiver' });
+    assert.equal(updated.status, 200, updated.text);
+    assert.equal(updated.body.user.role, 'caregiver');
+    assert.equal(JSON.stringify(updated.body).includes('password'), false);
+    const after = await User.findById(id).select('+password +passwordConfirm');
+    assert.equal(await after.verifyPassword('changed-password'), true);
+    assert.equal(after.passwordConfirm, undefined);
+    assert.equal((await requestJson(port, `${base}/${id}`, 'DELETE')).status, 204);
+    assert.equal((await requestJson(port, `${base}/${id}`)).status, 404);
   } finally {
     try {
       if (mongoose.connection.readyState === 1 && emails.length) {

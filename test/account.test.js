@@ -45,10 +45,11 @@ function request(port, path, method = 'GET', body = '', cookie = '') {
 }
 
 test('account schema validates role and email without a database', async () => {
-  const valid = new User({ firstName: 'Karma', lastName: 'Wangmo', email: 'KARMA@example.com', role: 'patient', password: 'longpassword' });
+  const valid = new User({ firstName: 'Karma', lastName: 'Wangmo', email: 'KARMA@example.com', role: 'patient', password: 'longpassword', passwordConfirm: 'longpassword' });
   await valid.validate();
   assert.equal(valid.email, 'karma@example.com');
   assert.equal(User.schema.path('password').options.select, false);
+  assert.equal(User.schema.path('passwordConfirm').options.select, false);
   const invalid = new User({ firstName: 'Karma', lastName: 'Wangmo', email: 'bad-email', role: 'admin', password: 'short' });
   await assert.rejects(invalid.validate(), error => {
     assert.equal(error.name, 'ValidationError');
@@ -57,16 +58,31 @@ test('account schema validates role and email without a database', async () => {
     assert.ok(error.errors.password);
     return true;
   });
+  const mismatch = new User({ firstName: 'Karma', lastName: 'Wangmo', email: 'karma@example.com', role: 'patient', password: 'longpassword', passwordConfirm: 'different' });
+  await assert.rejects(mismatch.validate(), /Passwords do not match/);
 });
 
 test('password save hook hashes the secret and verification rejects wrong passwords', async () => {
-  const user = new User({ firstName: 'Karma', lastName: 'Wangmo', email: 'karma@example.com', role: 'caregiver', password: 'correct horse battery' });
+  const user = new User({ firstName: 'Karma', lastName: 'Wangmo', email: 'karma@example.com', role: 'caregiver', password: 'correct horse battery', passwordConfirm: 'correct horse battery' });
   const hook = User.schema.s.hooks._pres.get('save').find(entry => entry.fn.name === 'hashPassword');
   assert.ok(hook, 'password hashing hook is registered');
   await new Promise((resolve, reject) => hook.fn.call(user, error => error ? reject(error) : resolve()));
   assert.notEqual(user.password, 'correct horse battery');
   assert.equal(await bcrypt.compare('correct horse battery', user.password), true);
   assert.equal(await user.verifyPassword('incorrect'), false);
+  assert.equal(user.passwordConfirm, undefined);
+});
+
+test('password update hook rejects mismatches and hashes matching updates', async () => {
+  const hook = User.schema.s.hooks._pres.get('findOneAndUpdate').find(entry => entry.fn.name === 'hashUpdatedPassword');
+  assert.ok(hook);
+  const invalid = { $set: { password: 'new-password', passwordConfirm: 'different' } };
+  await assert.rejects(hook.fn.call({ getUpdate: () => invalid }), /passwordConfirm/);
+  assert.equal(invalid.$set.password, 'new-password');
+  const valid = { $set: { password: 'new-password', passwordConfirm: 'new-password' } };
+  await hook.fn.call({ getUpdate: () => valid });
+  assert.equal(await bcrypt.compare('new-password', valid.$set.password), true);
+  assert.equal(Object.hasOwn(valid.$set, 'passwordConfirm'), false);
 });
 
 test('account routes render and reject invalid signup before database access', async () => {

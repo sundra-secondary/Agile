@@ -2,6 +2,7 @@ const express = require('express');
 const session = require('express-session');
 const path = require('path');
 const authRoutes = require('./routes/authRoutes');
+const userRoutes = require('./routes/userRoutes');
 
 const sessionSecret = process.env.SESSION_SECRET;
 if (process.env.NODE_ENV === 'production' &&
@@ -15,6 +16,7 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.urlencoded({ extended: false, limit: '10kb' }));
+app.use(express.json({ limit: '10kb' }));
 app.use(session({
   name: 'epharmacist.sid',
   secret: sessionSecret || 'local-development-only-change-me',
@@ -23,6 +25,8 @@ app.use(session({
   cookie: { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production', maxAge: 24 * 60 * 60 * 1000 }
 }));
 app.use(authRoutes);
+app.use('/api/v1/users', userRoutes);
+app.use('/api/', (req, res) => res.status(404).json({ error: 'API route not found.' }));
 app.use((req, res) => res.status(404).render('message', {
   title: 'Page not found', message: 'The page you requested does not exist.', action: '/'
 }));

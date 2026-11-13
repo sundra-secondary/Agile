@@ -23,6 +23,8 @@ When opened in the provided VS Code dev container, Docker Compose starts a Node.
 | `app.js`, `server.js` | Express app and database startup |
 | `models/userModel.js` | MongoDB account schema and password hashing |
 | `controllers/authController.js`, `routes/authRoutes.js` | Signup, login, dashboard, logout |
+| `controllers/userController.js`, `routes/userRoutes.js` | Practical 4 JSON user CRUD API |
+| `api-collections/` | Collection to import into Thunder Client |
 | `views/`, `public/` | EJS pages, CSS and browser validation |
 | `Database/agile-lab-4.drawio` | Editable account ER diagram |
 | `wireframes/account-flows.svg` | Signup and login wireframe |
@@ -35,8 +37,24 @@ When opened in the provided VS Code dev container, Docker Compose starts a Node.
 - [x] Save form data to MongoDB and verify login against the saved account.
 - [x] Hash passwords before saving; omit hashes from normal user queries.
 - [x] Connect to a local MongoDB instance and verify the full signup/login flow.
-- [x] Update the Jaggle.ai board and assign due dates in your own project.
+- [ ] Mark the Practical 4 password validation and encryption tasks complete in Jaggle.ai; the connected account currently has view-only access to the E-Pharmacist project.
 
 See [TODO.md](TODO.md) for the remaining Practical checks.
+
+## Practical 4 user API
+
+Import `api-collections/E-Pharmacist Users.postman_collection.json` from the Thunder Client Collections menu. Thunder Client accepts Postman 2.1 collections. Start the app, run **Create user**, then paste the returned `user.id` into the collection's `userId` variable before running the single-user requests. Use a new email for each repeated create request.
+
+| Method | Path | Result |
+| --- | --- | --- |
+| GET | `/api/v1/users` | 200 with `{ "users": [...] }` |
+| POST | `/api/v1/users` | 201 with `{ "user": {...} }` |
+| GET | `/api/v1/users/:id` | 200 with `{ "user": {...} }` |
+| PUT or PATCH | `/api/v1/users/:id` | 200 with the updated user |
+| DELETE | `/api/v1/users/:id` | 204 with no body |
+
+POST requires `firstName`, `lastName`, `email`, `role` (`patient` or `caregiver`), `password` (at least eight characters), and matching `passwordConfirm`. A password update requires both password fields. Passwords are hashed with bcrypt before storage; `passwordConfirm` is discarded and neither field appears in API responses. Invalid input returns 400, duplicate email 409, and a missing user 404.
+
+These CRUD routes follow the lab's open Thunder Client exercise. Add authorization before using them with real accounts or publishing the app.
 
 The app has a small account dashboard for checking the signed-in role. Pharmacist accounts, SME approval, reminders, and medical services belong to later backlog items.

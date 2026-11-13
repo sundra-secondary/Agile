@@ -1,0 +1,34 @@
+{
+  "info": {
+    "name": "E-Pharmacist Users - Practical 4",
+    "description": "Import this Postman 2.1 collection into Thunder Client. Run Create user first and copy the returned user.id into the userId collection variable for single-user requests.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:4001" },
+    { "key": "userId", "value": "PASTE_CREATED_USER_ID" }
+  ],
+  "item": [
+    {
+      "name": "Create user",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"firstName\": \"Karma\",\n  \"lastName\": \"Wangmo\",\n  \"email\": \"karma@example.com\",\n  \"role\": \"patient\",\n  \"password\": \"pass1234\",\n  \"passwordConfirm\": \"pass1234\"\n}" },
+        "url": "{{baseUrl}}/api/v1/users"
+      }
+    },
+    { "name": "Get all users", "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/users" } },
+    { "name": "Get user", "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/users/{{userId}}" } },
+    {
+      "name": "Update user and password",
+      "request": {
+        "method": "PATCH",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"firstName\": \"Karma Updated\",\n  \"password\": \"newpass1234\",\n  \"passwordConfirm\": \"newpass1234\"\n}" },
+        "url": "{{baseUrl}}/api/v1/users/{{userId}}"
+      }
+    },
+    { "name": "Delete user", "request": { "method": "DELETE", "url": "{{baseUrl}}/api/v1/users/{{userId}}" } }
+  ]
+}
