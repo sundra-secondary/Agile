@@ -94,6 +94,7 @@ async function getAllUsers(req, res) {
 async function createUser(req, res) {
   const input = inputFrom(req.body);
   if (!input) return res.status(400).json({ error: 'Send a JSON object.' });
+  if (input.role === 'sme') return res.status(403).json({ error: 'SME accounts cannot be created through the public API.' });
   try {
     const user = await User.create(input);
     return res.status(201).json({ user: publicUser(user) });
@@ -111,7 +112,11 @@ async function getUser(req, res) {
 async function updateUser(req, res) {
   const input = inputFrom(req.body);
   if (!input || !Object.keys(input).length) return res.status(400).json({ error: 'Send fields to update.' });
+  if (input.role === 'sme') return res.status(403).json({ error: 'SME role cannot be assigned through the public API.' });
   try {
+    const existing = await User.findById(req.params.id);
+    if (!existing) return res.status(404).json({ error: 'User not found.' });
+    if (existing.role === 'sme' && req.user.role !== 'sme') return res.status(403).json({ error: 'SME accounts cannot be changed by this user.' });
     const user = await User.findByIdAndUpdate(req.params.id, { $set: input }, { new: true, runValidators: true });
     if (!user) return res.status(404).json({ error: 'User not found.' });
     return res.json({ user: publicUser(user) });
@@ -120,6 +125,9 @@ async function updateUser(req, res) {
 
 async function deleteUser(req, res) {
   try {
+    const existing = await User.findById(req.params.id);
+    if (!existing) return res.status(404).json({ error: 'User not found.' });
+    if (existing.role === 'sme' && req.user.role !== 'sme') return res.status(403).json({ error: 'SME accounts cannot be deleted by this user.' });
     const user = await User.findByIdAndDelete(req.params.id);
     if (!user) return res.status(404).json({ error: 'User not found.' });
     return res.status(204).end();

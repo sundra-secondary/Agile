@@ -9,6 +9,7 @@ const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
 const app = require('../app');
 const User = require('../models/userModel');
+const News = require('../models/newsModel');
 
 function request(port, path, method = 'GET', fields = {}, cookie = '') {
   const body = new URLSearchParams(fields).toString();
@@ -82,6 +83,7 @@ test('patient and caregiver signup, stored hashes, and login against MongoDB', {
   }
   const uri = atlasRequested ? atlasUri : 'mongodb://127.0.0.1:27017/epharmacist_integration';
   const emails = [];
+  const newsIds = [];
   const uploadedPaths = [];
   let server;
   let activeCookie;
@@ -194,6 +196,8 @@ test('patient and caregiver signup, stored hashes, and login against MongoDB', {
     assert.equal(list.status, 200);
     assert.ok(list.body.users.some(user => user.id === id));
     assert.equal(JSON.stringify(list.body).includes('password'), false);
+    assert.equal((await requestJson(port, base, 'POST', { ...fields, email: `blocked-${randomUUID()}@example.com`, role: 'sme' }, token)).status, 403);
+    assert.equal((await requestJson(port, `${base}/${id}`, 'PATCH', { role: 'sme' }, token)).status, 403);
     assert.equal((await requestJson(port, `${base}/${id}`, 'GET', undefined, token)).body.user.email, email);
     assert.equal((await requestJson(port, `${base}/bad-id`, 'GET', undefined, token)).status, 400);
     const mismatch = await requestJson(port, `${base}/${id}`, 'PATCH', { password: 'changed-password', passwordConfirm: 'different' }, token);
@@ -207,6 +211,41 @@ test('patient and caregiver signup, stored hashes, and login against MongoDB', {
     const after = await User.findById(id).select('+password +passwordConfirm');
     assert.equal(await after.verifyPassword('changed-password'), true);
     assert.equal(after.passwordConfirm, undefined);
+
+    const smeEmail = `sme-${randomUUID()}@example.com`;
+    emails.push(smeEmail);
+    const sme = await User.create({ firstName: 'News', lastName: 'Editor', email: smeEmail, role: 'sme', password: 'editor-password', passwordConfirm: 'editor-password' });
+    const smeLogin = await requestJson(port, `${base}/login`, 'POST', { email: smeEmail, password: 'editor-password' });
+    assert.equal(smeLogin.status, 200);
+    assert.equal((await requestJson(port, `${base}/${sme.id}`, 'DELETE', undefined, token)).status, 403);
+    const newsBase = '/api/v1/newsFeeds';
+    const newsFields = { title: 'Healthy living update', description: 'Helpful tips for everyday care.', content: 'A practical guide to a healthier daily routine.', imageCover: '/images/news-default.svg', isPublished: false, user: id };
+    assert.equal((await requestJson(port, newsBase, 'POST', newsFields)).status, 401);
+    assert.equal((await requestJson(port, newsBase, 'POST', newsFields, token)).status, 403);
+    assert.equal((await requestJson(port, newsBase, 'POST', { ...newsFields, description: 'short' }, smeLogin.body.token)).status, 400);
+    const createdNews = await requestJson(port, newsBase, 'POST', newsFields, smeLogin.body.token);
+    assert.equal(createdNews.status, 201, createdNews.text);
+    const newsId = createdNews.body.data.news._id;
+    newsIds.push(newsId);
+    assert.equal(createdNews.body.data.news.user, sme.id);
+    assert.equal((await requestJson(port, newsBase)).body.data.news.some(item => item._id === newsId), false);
+    assert.equal((await requestJson(port, `${newsBase}/${newsId}`)).status, 404);
+    assert.equal((await requestJson(port, `${newsBase}/${newsId}`, 'GET', undefined, smeLogin.body.token)).status, 200);
+    assert.equal((await requestJson(port, `${newsBase}/${newsId}`, 'PATCH', { isPublished: true }, token)).status, 403);
+    const otherSmeEmail = `sme-${randomUUID()}@example.com`;
+    emails.push(otherSmeEmail);
+    await User.create({ firstName: 'Other', lastName: 'Editor', email: otherSmeEmail, role: 'sme', password: 'other-password', passwordConfirm: 'other-password' });
+    const otherSmeLogin = await requestJson(port, `${base}/login`, 'POST', { email: otherSmeEmail, password: 'other-password' });
+    assert.equal((await requestJson(port, `${newsBase}/${newsId}`, 'PATCH', { title: 'Stolen' }, otherSmeLogin.body.token)).status, 403);
+    assert.equal((await requestJson(port, `${newsBase}/${newsId}`, 'DELETE', undefined, otherSmeLogin.body.token)).status, 403);
+    const published = await requestJson(port, `${newsBase}/${newsId}`, 'PATCH', { isPublished: true }, smeLogin.body.token);
+    assert.equal(published.status, 200);
+    assert.ok(published.body.data.news.publishedAt);
+    assert.equal((await requestJson(port, newsBase)).body.data.news.some(item => item._id === newsId), true);
+    assert.equal((await requestJson(port, `${newsBase}/${newsId}`)).status, 200);
+    assert.equal((await requestJson(port, `${newsBase}/${newsId}`, 'DELETE', undefined, smeLogin.body.token)).status, 204);
+    assert.equal((await requestJson(port, `${newsBase}/${newsId}`)).status, 404);
+
     assert.equal((await requestJson(port, `${base}/${id}`, 'DELETE', undefined, token)).status, 204);
     assert.equal((await requestJson(port, `${base}/${id}`, 'GET', undefined, token)).status, 401);
     const otherCookieResponse = await request(port, `${base}/${id}`, 'GET', {}, activeCookie);
@@ -214,6 +253,7 @@ test('patient and caregiver signup, stored hashes, and login against MongoDB', {
   } finally {
     try {
       if (mongoose.connection.readyState === 1 && emails.length) {
+        if (newsIds.length) await News.deleteMany({ _id: { $in: newsIds } });
         await User.deleteMany({ email: { $in: emails } });
       }
       await Promise.all(uploadedPaths.map(file => fs.unlink(file).catch(() => {})));

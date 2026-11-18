@@ -4,6 +4,7 @@ const path = require('path');
 const authRoutes = require('./routes/authRoutes');
 const viewRoutes = require('./routes/viewRoutes');
 const userRoutes = require('./routes/userRoutes');
+const newsRoutes = require('./routes/newsRoutes');
 const AppError = require('./utils/AppError');
 
 if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32 ||
@@ -21,6 +22,7 @@ app.use(express.json({ limit: '10kb' }));
 app.use(viewRoutes);
 app.use(authRoutes);
 app.use('/api/v1/users', userRoutes);
+app.use('/api/v1/newsFeeds', newsRoutes);
 app.use('/api/', (req, res, next) => next(new AppError('API route not found.', 404)));
 app.use((req, res) => res.status(404).render('message', {
   title: 'Page not found', message: 'The page you requested does not exist.', action: '/'

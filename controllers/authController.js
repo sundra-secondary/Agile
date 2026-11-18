@@ -83,6 +83,13 @@ function protectPage(req, res, next) {
   });
 }
 
+function restrictTo(...roles) {
+  return (req, res, next) => {
+    if (!req.user || !roles.includes(req.user.role)) return next(new AppError('You do not have permission for this action.', 403));
+    return next();
+  };
+}
+
 async function apiSignup(req, res, next) {
   try {
     const user = await createAccount(req.body || {});
@@ -157,4 +164,4 @@ function logout(req, res) {
   return res.redirect('/login');
 }
 
-module.exports = { apiSignup, apiLogin, apiLogout, updateMyPassword, formSignup, formLogin, logout, readToken, protectApi, protectPage };
+module.exports = { apiSignup, apiLogin, apiLogout, updateMyPassword, formSignup, formLogin, logout, readToken, protectApi, protectPage, restrictTo };

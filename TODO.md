@@ -11,5 +11,6 @@
 - [x] Complete Practical 6 Axios signup and login, feedback alerts, guest and signed-in dashboard, display-user cookie, and API logout.
 - [x] Place Lab 7 and its four account-flow child tasks in Done in E-Pharmacist-Bomjan.
 - [x] Complete Practical 7 protected profile, self-service data/password updates, and profile photo upload.
+- [x] Complete Practical 8 SME-owned news CRUD, public published news feed, and dashboard rendering.
 
 The PDF uses GitLab while this project is on GitHub. Confirm the required submission repository with the instructor.

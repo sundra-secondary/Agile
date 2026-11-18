@@ -1,5 +1,5 @@
 <%- include('partials/head') %>
-<main class="single-page" data-dashboard data-authenticated="<%= user ? 'true' : 'false' %>" data-user-id="<%= user ? user.id : '' %>" data-first-name="<%= user ? user.firstName : '' %>" data-role="<%= user ? user.role : '' %>">
+<main class="dashboard-page" data-dashboard data-authenticated="<%= user ? 'true' : 'false' %>" data-user-id="<%= user ? user.id : '' %>" data-first-name="<%= user ? user.firstName : '' %>" data-role="<%= user ? user.role : '' %>">
   <div class="dashboard-card">
     <% if (user) { %>
       <p class="eyebrow">YOUR ACCOUNT</p>
@@ -18,6 +18,22 @@
       <p class="dashboard-secondary">New here? <a class="text-link" href="/signup">Create an account</a></p>
     <% } %>
   </div>
+  <section class="news-section" aria-labelledby="news-heading">
+    <div class="news-heading"><div><p class="eyebrow">SPRINT II</p><h2 id="news-heading">Health news</h2></div><p>Updates from our subject matter experts.</p></div>
+    <p class="news-status" data-news-status role="status">Loading news...</p>
+    <div class="news-grid" data-news-feed></div>
+  </section>
+  <template id="news-card-template">
+    <article class="news-card">
+      <img data-news-image alt="News cover">
+      <div class="news-card-body">
+        <p class="news-meta"><time data-news-date></time><span data-news-author></span></p>
+        <h3 data-news-title></h3>
+        <p data-news-description></p>
+        <details><summary>Read story</summary><p data-news-content></p></details>
+      </div>
+    </article>
+  </template>
 </main>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.20.0/axios.min.js" defer></script>
 <script src="/js/alert.js" defer></script>

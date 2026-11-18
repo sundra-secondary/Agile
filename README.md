@@ -1,4 +1,4 @@
-# E-Pharmacist · Sprint I account signup
+# E-Pharmacist · Sprint I accounts and Sprint II news
 
 This project implements the patient/caregiver account flow from CSF202 Practicals 4, 5, 6, and 7. It uses Express, MVC folders, MongoDB/Mongoose, JWT authentication, and browser/server form validation. Passwords are salted and hashed with bcrypt before storage.
 
@@ -72,4 +72,17 @@ The dashboard, signup, and login pages remain available at `/dashboard`, `/signu
 
 The `/me` page requires a verified login. Its Axios forms update only the signed-in user's account. Profile images are checked by file signature, stored under `public/uploads/users/`, and excluded from Git; the image URL is saved on the user document. Password changes require the current password and hash the new password before storage.
 
-The app has a small account dashboard for checking the signed-in role. Pharmacist accounts, SME approval, reminders, and medical services belong to later backlog items.
+The app has a small account dashboard for checking the signed-in role. Pharmacist accounts, SME approval workflows, reminders, and medical services belong to later backlog items.
+
+## Practical 8 news feeds
+
+Sprint II work is on `sprint-2-branch`. The `News` model stores a title, short description, content, cover-image URL, publication state/date, and a reference to its SME author. The dashboard loads published news from the public JSON API with Axios, so guests can read it too. Drafts are hidden from public reads.
+
+| Method | Path | Access |
+| --- | --- | --- |
+| GET | `/api/v1/newsFeeds` | Public; published news only |
+| GET | `/api/v1/newsFeeds/:id` | Public if published; author can read their draft |
+| POST | `/api/v1/newsFeeds` | Signed-in SME only |
+| PATCH, DELETE | `/api/v1/newsFeeds/:id` | SME author only |
+
+Public signup still allows only patient and caregiver accounts. To make a local demo editor, set `SME_EMAIL` and `SME_PASSWORD` (at least eight characters) in ignored `.env` and run `npm run seed:sme` once. The script creates a bcrypt-hashed SME account and rejects an email already in use. Log in as that account and use its token with `api-collections/E-Pharmacist News.postman_collection.json` in Thunder Client. A sample cover is available at `/images/news-default.svg`. The news author is taken from the verified token, not from client JSON.

@@ -102,6 +102,7 @@ test('account routes render and reject invalid signup before database access', a
     const dashboard = await request(port, '/dashboard');
     assert.equal(dashboard.status, 200);
     assert.match(dashboard.text, /Your care starts here/);
+    assert.match(dashboard.text, /data-news-feed/);
     assert.doesNotMatch(dashboard.text, /YOUR ACCOUNT/);
     const profile = await request(port, '/me');
     assert.equal(profile.status, 302);

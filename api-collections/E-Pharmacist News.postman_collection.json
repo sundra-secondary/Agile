@@ -1,0 +1,44 @@
+{
+  "info": {
+    "name": "E-Pharmacist News - Practical 8",
+    "description": "Import into Thunder Client. Create an SME account with npm run seed:sme, log in as that account, then copy its token into smeToken. Public news requests need no token.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:4001" },
+    { "key": "smeToken", "value": "PASTE_SME_JWT_TOKEN" },
+    { "key": "newsId", "value": "PASTE_NEWS_ID" }
+  ],
+  "item": [
+    {
+      "name": "Log in as SME",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"email\": \"editor@example.com\",\n  \"password\": \"REPLACE_WITH_SME_PASSWORD\"\n}" },
+        "url": "{{baseUrl}}/api/v1/users/login"
+      }
+    },
+    { "name": "Published news (public)", "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/newsFeeds" } },
+    { "name": "News item (public after publication)", "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/newsFeeds/{{newsId}}" } },
+    {
+      "name": "Create news as SME",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{smeToken}}" }],
+        "body": { "mode": "raw", "raw": "{\n  \"title\": \"Healthy living update\",\n  \"description\": \"Helpful tips for everyday care.\",\n  \"content\": \"A practical guide to a healthier daily routine.\",\n  \"imageCover\": \"/images/news-default.svg\",\n  \"isPublished\": true\n}" },
+        "url": "{{baseUrl}}/api/v1/newsFeeds"
+      }
+    },
+    {
+      "name": "Update own news as SME",
+      "request": {
+        "method": "PATCH",
+        "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{smeToken}}" }],
+        "body": { "mode": "raw", "raw": "{\n  \"title\": \"Healthy living update - revised\"\n}" },
+        "url": "{{baseUrl}}/api/v1/newsFeeds/{{newsId}}"
+      }
+    },
+    { "name": "Delete own news as SME", "request": { "method": "DELETE", "header": [{ "key": "Authorization", "value": "Bearer {{smeToken}}" }], "url": "{{baseUrl}}/api/v1/newsFeeds/{{newsId}}" } }
+  ]
+}

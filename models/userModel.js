@@ -13,7 +13,7 @@ const userSchema = new mongoose.Schema({
     trim: true,
     validate: [validator.isEmail, 'Enter a valid email address']
   },
-  role: { type: String, enum: ['patient', 'caregiver'], required: true },
+  role: { type: String, enum: ['patient', 'caregiver', 'sme'], required: true },
   photo: { type: String, default: null },
   password: { type: String, required: true, select: false, minlength: 8 },
   passwordConfirm: {
