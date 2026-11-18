@@ -8,7 +8,7 @@
     alert.className = `alert ${type === 'success' ? 'alert-success' : ''}`;
     alert.setAttribute('role', type === 'success' ? 'status' : 'alert');
     alert.textContent = message;
-    const host = document.querySelector('.form-inner, .dashboard-card') || document.querySelector('main');
+    const host = document.querySelector('.form-inner, .dashboard-card, .profile-heading') || document.querySelector('main');
     host.prepend(alert);
     return alert;
   };

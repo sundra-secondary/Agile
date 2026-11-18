@@ -28,6 +28,25 @@
         "url": "{{baseUrl}}/api/v1/users/login"
       }
     },
+    { "name": "My account", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": "{{baseUrl}}/api/v1/users/me" } },
+    {
+      "name": "Update my details",
+      "request": {
+        "method": "PATCH",
+        "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }],
+        "body": { "mode": "raw", "raw": "{\n  \"firstName\": \"Karma Updated\",\n  \"lastName\": \"Wangmo\",\n  \"email\": \"karma@example.com\"\n}" },
+        "url": "{{baseUrl}}/api/v1/users/updateMe"
+      }
+    },
+    {
+      "name": "Change my password",
+      "request": {
+        "method": "PATCH",
+        "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" }],
+        "body": { "mode": "raw", "raw": "{\n  \"passwordCurrent\": \"pass1234\",\n  \"password\": \"newpass1234\",\n  \"passwordConfirm\": \"newpass1234\"\n}" },
+        "url": "{{baseUrl}}/api/v1/users/updateMyPassword"
+      }
+    },
     { "name": "Get all users", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": "{{baseUrl}}/api/v1/users" } },
     { "name": "Get user", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }], "url": "{{baseUrl}}/api/v1/users/{{userId}}" } },
     {

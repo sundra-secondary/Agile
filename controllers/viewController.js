@@ -12,4 +12,8 @@ function dashboard(req, res) {
   return res.render('dashboard', { title: 'Your account', user: req.user || null });
 }
 
-module.exports = { signupPage, loginPage, dashboard };
+function profile(req, res) {
+  return res.render('profile', { title: 'My profile', user: req.user });
+}
+
+module.exports = { signupPage, loginPage, dashboard, profile };

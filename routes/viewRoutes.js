@@ -7,5 +7,6 @@ router.get('/', (req, res) => res.redirect('/signup'));
 router.get('/signup', auth.readToken, views.signupPage);
 router.get('/login', auth.readToken, views.loginPage);
 router.get('/dashboard', auth.readToken, views.dashboard);
+router.get('/me', auth.protectPage, views.profile);
 
 module.exports = router;

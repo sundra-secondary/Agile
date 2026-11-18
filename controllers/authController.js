@@ -6,7 +6,7 @@ const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const cookieName = 'epharmacist.jwt';
 
 function publicUser(user) {
-  return { id: user.id, firstName: user.firstName, lastName: user.lastName, email: user.email, role: user.role };
+  return { id: user.id, firstName: user.firstName, lastName: user.lastName, email: user.email, role: user.role, photo: user.photo };
 }
 
 function issueToken(user, res) {
@@ -97,6 +97,22 @@ async function apiLogin(req, res, next) {
   } catch (error) { return next(error); }
 }
 
+async function updateMyPassword(req, res, next) {
+  try {
+    const { passwordCurrent, password, passwordConfirm } = req.body || {};
+    if ([passwordCurrent, password, passwordConfirm].some(value => typeof value !== 'string' || !value)) {
+      throw new AppError('Complete all password fields.', 400);
+    }
+    if (password.length < 8 || password !== passwordConfirm) throw new AppError('New passwords must match and have at least 8 characters.', 400);
+    const user = await User.findById(req.user.id).select('+password');
+    if (!user || !(await user.verifyPassword(passwordCurrent))) throw new AppError('Current password is incorrect.', 401);
+    user.password = password;
+    user.passwordConfirm = passwordConfirm;
+    await user.save();
+    return res.json({ status: 'success', token: issueToken(user, res), user: publicUser(user) });
+  } catch (error) { return next(error); }
+}
+
 async function formSignup(req, res) {
   const values = { firstName: req.body.firstName || '', lastName: req.body.lastName || '', email: req.body.email || '', role: req.body.role || '' };
   try {
@@ -141,4 +157,4 @@ function logout(req, res) {
   return res.redirect('/login');
 }
 
-module.exports = { apiSignup, apiLogin, apiLogout, formSignup, formLogin, logout, readToken, protectApi, protectPage };
+module.exports = { apiSignup, apiLogin, apiLogout, updateMyPassword, formSignup, formLogin, logout, readToken, protectApi, protectPage };

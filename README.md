@@ -1,6 +1,6 @@
 # E-Pharmacist · Sprint I account signup
 
-This project implements the patient/caregiver account flow from CSF202 Practicals 4, 5, and 6. It uses Express, MVC folders, MongoDB/Mongoose, JWT authentication, and browser/server form validation. Passwords are salted and hashed with bcrypt before storage.
+This project implements the patient/caregiver account flow from CSF202 Practicals 4, 5, 6, and 7. It uses Express, MVC folders, MongoDB/Mongoose, JWT authentication, and browser/server form validation. Passwords are salted and hashed with bcrypt before storage.
 
 ## Run locally
 
@@ -23,7 +23,7 @@ When opened in the provided VS Code dev container, Docker Compose starts a Node.
 | `app.js`, `server.js` | Express app and database startup |
 | `models/userModel.js` | MongoDB account schema and password hashing |
 | `controllers/authController.js`, `routes/authRoutes.js` | JWT signup and login, form submission, logout |
-| `controllers/viewController.js`, `routes/viewRoutes.js` | Signup, login, and guest or signed-in dashboard pages |
+| `controllers/viewController.js`, `routes/viewRoutes.js` | Signup, login, dashboard, and protected profile pages |
 | `utils/AppError.js` | Predictable API errors |
 | `controllers/userController.js`, `routes/userRoutes.js` | Practical 4 JSON user CRUD API |
 | `api-collections/` | Collection to import into Thunder Client |
@@ -44,6 +44,7 @@ When opened in the provided VS Code dev container, Docker Compose starts a Node.
 - [x] Add Lab 5 and its four Practical 5 child tasks in E-Pharmacist-Bomjan and move all five tasks to Done.
 - [x] Connect signup and login forms to the API with Axios, show account alerts, render guest and signed-in dashboard states, and log out through the API for Practical 6.
 - [x] Add Lab 7 and its four Practical 6 child tasks in E-Pharmacist-Bomjan and place all five in Done.
+- [x] Add the Practical 7 protected profile page, self-service account and password updates, and image upload.
 
 See [TODO.md](TODO.md) for the remaining Practical checks.
 
@@ -56,6 +57,9 @@ Import `api-collections/E-Pharmacist Users.postman_collection.json` from the Thu
 | POST | `/api/v1/users/signup` | 201 with a JWT, user, and HTTP-only cookie |
 | POST | `/api/v1/users/login` | 200 with a JWT, user, and HTTP-only cookie |
 | POST | `/api/v1/users/logout` | 200 and clears the authentication and display-user cookies |
+| GET | `/api/v1/users/me` | Authenticated user's public account details |
+| PATCH | `/api/v1/users/updateMe` | Update own name/email and optionally upload a JPEG, PNG, or WebP photo (max 2 MB) |
+| PATCH | `/api/v1/users/updateMyPassword` | Change own password after verifying current password; issue a fresh JWT cookie |
 | GET | `/api/v1/users` | 200 with `{ "users": [...] }` |
 | POST | `/api/v1/users` | 201 with `{ "user": {...} }` |
 | GET | `/api/v1/users/:id` | 200 with `{ "user": {...} }` |
@@ -65,5 +69,7 @@ Import `api-collections/E-Pharmacist Users.postman_collection.json` from the Thu
 Signup requires `firstName`, `lastName`, `email`, `role` (`patient` or `caregiver`), `password` (at least eight characters), and matching `passwordConfirm`. A password update requires both password fields. Passwords are hashed with bcrypt before storage; `passwordConfirm` is discarded and neither field appears in API responses. The user CRUD routes require `Authorization: Bearer <token>` or the JWT cookie. Invalid input returns 400, invalid credentials or token 401, duplicate email 409, and a missing user 404.
 
 The dashboard, signup, and login pages remain available at `/dashboard`, `/signup`, and `/login`. The dashboard shows a guest view until a user signs in. The signup and login pages send Axios requests to the JSON API and show success or error alerts. After success, the browser stores only the account ID, first name, and role in a display cookie; server-verified authentication determines the dashboard state. The JWT stays in an HTTP-only, SameSite Lax cookie and is marked Secure in production. The Sign out button calls the logout API and clears both cookies. `JWT_EXPIRES_IN` defaults to `90d`; `JWT_COOKIE_EXPIRES_IN` defaults to 90 days.
+
+The `/me` page requires a verified login. Its Axios forms update only the signed-in user's account. Profile images are checked by file signature, stored under `public/uploads/users/`, and excluded from Git; the image URL is saved on the user document. Password changes require the current password and hash the new password before storage.
 
 The app has a small account dashboard for checking the signed-in role. Pharmacist accounts, SME approval, reminders, and medical services belong to later backlog items.

@@ -3,6 +3,8 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const http = require('node:http');
 const { randomUUID } = require('node:crypto');
+const fs = require('node:fs/promises');
+const path = require('node:path');
 const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
 const app = require('../app');
@@ -46,6 +48,27 @@ function requestJson(port, path, method = 'GET', fields, token = '') {
   });
 }
 
+function requestPhoto(port, cookie) {
+  const boundary = `lab-${randomUUID()}`;
+  const image = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScL/nwAAAABJRU5ErkJggg==', 'base64');
+  const body = Buffer.concat([
+    Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="photo"; filename="test.png"\r\nContent-Type: image/png\r\n\r\n`),
+    image, Buffer.from(`\r\n--${boundary}--\r\n`)
+  ]);
+  return new Promise((resolve, reject) => {
+    const req = http.request({ hostname: '127.0.0.1', port, path: '/api/v1/users/updateMe', method: 'PATCH',
+      headers: { cookie, 'content-type': `multipart/form-data; boundary=${boundary}`, 'content-length': body.length }
+    }, res => {
+      let text = '';
+      res.setEncoding('utf8');
+      res.on('data', chunk => { text += chunk; });
+      res.on('end', () => resolve({ status: res.statusCode, body: JSON.parse(text) }));
+    });
+    req.on('error', reject);
+    req.end(body);
+  });
+}
+
 test('patient and caregiver signup, stored hashes, and login against MongoDB', { timeout: 30000 }, async () => {
   const atlasRequested = process.argv.includes('--atlas');
   const atlasUri = process.env.TEST_DATABASE_URL;
@@ -59,6 +82,7 @@ test('patient and caregiver signup, stored hashes, and login against MongoDB', {
   }
   const uri = atlasRequested ? atlasUri : 'mongodb://127.0.0.1:27017/epharmacist_integration';
   const emails = [];
+  const uploadedPaths = [];
   let server;
   let activeCookie;
   try {
@@ -105,6 +129,33 @@ test('patient and caregiver signup, stored hashes, and login against MongoDB', {
       const loginCookie = login.headers['set-cookie'][0].split(';')[0];
       activeCookie = loginCookie;
       assert.equal((await request(port, '/dashboard', 'GET', {}, loginCookie)).status, 200);
+      const profile = await request(port, '/me', 'GET', {}, loginCookie);
+      assert.equal(profile.status, 200);
+      assert.match(profile.text, /data-profile-form/);
+      const account = await request(port, '/api/v1/users/me', 'GET', {}, loginCookie);
+      assert.equal(account.status, 200);
+      assert.equal(JSON.parse(account.text).user.email, email);
+      if (role === 'patient') {
+        const badPassword = await request(port, '/api/v1/users/updateMyPassword', 'PATCH', {
+          passwordCurrent: 'wrong', password: 'new-password', passwordConfirm: 'new-password'
+        }, loginCookie);
+        assert.equal(badPassword.status, 401);
+        const updatedDetails = await request(port, '/api/v1/users/updateMe', 'PATCH', { firstName: 'Updated' }, loginCookie);
+        assert.equal(updatedDetails.status, 200);
+        assert.equal(JSON.parse(updatedDetails.text).user.firstName, 'Updated');
+        const photo = await requestPhoto(port, loginCookie);
+        assert.equal(photo.status, 200);
+        assert.match(photo.body.user.photo, /^\/uploads\/users\/[a-f0-9-]+\.png$/);
+        uploadedPaths.push(path.join(__dirname, '..', 'public', photo.body.user.photo.slice(1)));
+        const updatedPassword = await request(port, '/api/v1/users/updateMyPassword', 'PATCH', {
+          passwordCurrent: password, password: 'new-password', passwordConfirm: 'new-password'
+        }, loginCookie);
+        assert.equal(updatedPassword.status, 200);
+        assert.match(updatedPassword.headers['set-cookie'][0], /HttpOnly/);
+        const changed = await User.findOne({ email }).select('+password');
+        assert.equal(await changed.verifyPassword('new-password'), true);
+        assert.equal(await changed.verifyPassword(password), false);
+      }
     }
 
     const email = `api-test-${randomUUID()}@example.com`;
@@ -165,6 +216,7 @@ test('patient and caregiver signup, stored hashes, and login against MongoDB', {
       if (mongoose.connection.readyState === 1 && emails.length) {
         await User.deleteMany({ email: { $in: emails } });
       }
+      await Promise.all(uploadedPaths.map(file => fs.unlink(file).catch(() => {})));
     } finally {
       if (server) await new Promise(resolve => server.close(resolve));
       await mongoose.disconnect();

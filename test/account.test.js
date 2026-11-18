@@ -103,6 +103,10 @@ test('account routes render and reject invalid signup before database access', a
     assert.equal(dashboard.status, 200);
     assert.match(dashboard.text, /Your care starts here/);
     assert.doesNotMatch(dashboard.text, /YOUR ACCOUNT/);
+    const profile = await request(port, '/me');
+    assert.equal(profile.status, 302);
+    assert.equal(profile.headers.location, '/login');
+    assert.equal((await request(port, '/api/v1/users/me')).status, 401);
     const protectedApi = await request(port, '/api/v1/users');
     assert.equal(protectedApi.status, 401);
     assert.match(protectedApi.text, /Sign in/);

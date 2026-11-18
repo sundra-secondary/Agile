@@ -14,6 +14,7 @@ const userSchema = new mongoose.Schema({
     validate: [validator.isEmail, 'Enter a valid email address']
   },
   role: { type: String, enum: ['patient', 'caregiver'], required: true },
+  photo: { type: String, default: null },
   password: { type: String, required: true, select: false, minlength: 8 },
   passwordConfirm: {
     type: String,

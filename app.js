@@ -27,7 +27,7 @@ app.use((req, res) => res.status(404).render('message', {
 }));
 app.use((error, req, res, next) => {
   const status = error.code === 11000 ? 409 : error.statusCode ||
-    (error.name === 'ValidationError' || error.type === 'entity.parse.failed' ? 400 : 500);
+    (error.name === 'ValidationError' || error.name === 'MulterError' || error.type === 'entity.parse.failed' ? 400 : 500);
   const message = error.code === 11000 ? 'An account with that email already exists.' :
     error.name === 'ValidationError' ? Object.values(error.errors)[0].message :
     status === 500 ? 'Unable to process the request.' : error.message;
