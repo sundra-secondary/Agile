@@ -8,7 +8,7 @@ This project implements the patient/caregiver account flow from CSF202 Practical
 2. Run `npm install`.
 3. Copy `.env.example` to `.env`. Set `DATABASE_URL` for Atlas or leave `DATABASE_LOCAL` for a local database. Replace the example `JWT_SECRET` with a unique random value of at least 32 characters. Startup requires this.
 4. Run `npm start` and open <http://localhost:4001/signup>. For automatic restarts, run `npm run dev`.
-5. Run `npm test` for the model and route checks.
+5. Run `npm test` for account checks and the Lab 10 news QA suite. Run `npm run test:coverage` for news coverage.
 
 With MongoDB running locally, run `npm run test:integration` to verify patient and caregiver signup, login, and password storage against a separate `epharmacist_integration` database. The test removes the accounts it creates. To test Atlas, set `TEST_DATABASE_URL` in your ignored `.env` to an Atlas URI for a separate test database, then run `npm run test:atlas`. Keep credentials out of Git.
 
@@ -86,3 +86,7 @@ Sprint II work is on `sprint-2-branch`. The `News` model stores a title, short d
 | PATCH, DELETE | `/api/v1/newsFeeds/:id` | SME author only |
 
 Public signup still allows only patient and caregiver accounts. To make a local demo editor, set `SME_EMAIL` and `SME_PASSWORD` (at least eight characters) in ignored `.env` and run `npm run seed:sme` once. The script creates a bcrypt-hashed SME account and rejects an email already in use. Log in as that account and use its token with `api-collections/E-Pharmacist News.postman_collection.json` in Thunder Client. A sample cover is available at `/images/news-default.svg`. The news author is taken from the verified token, not from client JSON.
+
+## Practical 9 / Lab 10 news QA
+
+The supplied `tests.zip` has been adapted to the current app. `tests/unit/` checks the News schema, SME access, and controller logic. `tests/integration/` sends real HTTP requests to Express through Supertest while mocking database calls. The suite covers public reads, draft visibility, authorization, ownership, malformed input, invalid tokens, create, update, and delete. `npm test` includes the existing account checks; `npm run test:unit`, `npm run test:acceptance`, and `npm run test:coverage` provide focused runs. See [`tests/TEST_PLAN.md`](tests/TEST_PLAN.md) for test cases and the manual database/browser acceptance cycle.
